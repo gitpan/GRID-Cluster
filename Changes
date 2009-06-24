@@ -1,0 +1,8 @@
+Revision history for Perl extension GRID::Cluster.
+
+-- pruebas!!!!
+-- Método/Operador qx
+0.01  Mon Mar 30 10:06:00 2009
+	- original version; created by h2xs 1.23 with options
+		-XA -n GRID::Cluster
+
