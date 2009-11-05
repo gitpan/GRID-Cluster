@@ -7,7 +7,7 @@
 
 use warnings;
 use strict;
-use Test::More tests => 11;
+use Test::More tests => 13;
 BEGIN { use_ok('GRID::Cluster') };
 
 #########################
@@ -22,7 +22,7 @@ else {
   chdir "t";
 }
 SKIP: {
-  skip("Developer test", 10) unless ($ENV{DEVELOPER} && $ENV{GRID_REMOTE_MACHINES} && -x "$executable" && ($^O =~ /nux$/));
+  skip("Developer test", 12) unless ($ENV{DEVELOPER} && $ENV{GRID_REMOTE_MACHINES} && -x "$executable" && ($^O =~ /nux$/));
 
      my $output = `$executable -N 1000 2>&1`;
      like($output, qr{Pi Value: 3.14159.*}, "Example to calculate PI with 1000 iterations");
@@ -96,4 +96,16 @@ Warning: Host.*has not been initialized: Can't execute perl in.*using ssh connec
      like($output,
           qr{Dimensions error. Matrix A: 2 x 2, Matrix B: 100 x 100},
           "Error: A product with invalid matrix dimensions");
+     
+     $output = `pi_eval/eval_pi.pl 2>&1`;
+     like($output,
+          qr{(?i)El\s*resultado\s*del\s*cálculo\s*de\s*PI\s*es:\s*3\.14},
+          "Parallel eval");
+
+     $output = `modput/modput.pl 2>&1`;
+     my @num = ($output =~ /results'\s*=>\s*\[\s*(\d+)\s*\]/g);
+
+     my @expected = 1..(@num);
+     my $ok = "@num" eq "@expected";
+     ok($ok, "Parallel modput (not binary module)");
 }

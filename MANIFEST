@@ -32,6 +32,7 @@ examples/pi/README
 examples/uname.pl
 examples/uname_echo_qx.pl
 examples/uname_qx.pl
+examples/eval_pi.pl
 t/GRID-Cluster.t
 t/matrix_open/data/A100x100.dat
 t/matrix_open/data/A10x10.dat
@@ -55,4 +56,6 @@ t/pi_open/pi_grid_scalar.pl
 t/pi_qx/pi.c
 t/pi_qx/pi_grid.pl
 t/pi_qx/Makefile
+t/pi_eval/eval_pi.pl
+t/modput/modput.pl
 META.yml                                 Module meta-data (added by MakeMaker)

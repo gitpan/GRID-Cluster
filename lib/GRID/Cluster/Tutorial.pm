@@ -6,59 +6,59 @@ GRID::Cluster::Tutorial - An introduction to parallel computing using components
 
 =head1 SYNOPSIS
 
-$ time ./pi_grid.pl -co MachineConfig.pm -N 1000000000 -np 1
-Calculating Pi with 1000000000 iterations and 1 processes
-Elapsed Time: 56.591251 seconds
-Pi Value: 3.141593
+  $ time ./pi_grid.pl -co MachineConfig.pm -N 1000000000 -np 1
+  Calculating Pi with 1000000000 iterations and 1 processes
+  Elapsed Time: 56.591251 seconds
+  Pi Value: 3.141593
 
-real    0m58.374s
-user    0m0.520s
-sys     0m0.048s
+  real    0m58.374s
+  user    0m0.520s
+  sys     0m0.048s
 
-$ time ./pi_grid.pl -co MachineConfig.pm -N 1000000000 -np 2
-Calculating Pi with 1000000000 iterations and 2 processes
-Elapsed Time: 28.459958 seconds
-Pi Value: 3.141592
+  $ time ./pi_grid.pl -co MachineConfig.pm -N 1000000000 -np 2
+  Calculating Pi with 1000000000 iterations and 2 processes
+  Elapsed Time: 28.459958 seconds
+  Pi Value: 3.141592
 
-real    0m30.610s
-user    0m0.524s
-sys     0m0.056s
+  real    0m30.610s
+  user    0m0.524s
+  sys     0m0.056s
 
-$ time ./pi_grid.pl -co MachineConfig.pm -N 1000000000 -np 3
-Calculating Pi with 1000000000 iterations and 3 processes
-Elapsed Time: 20.956588 seconds
-Pi Value: 3.141594
+  $ time ./pi_grid.pl -co MachineConfig.pm -N 1000000000 -np 3
+  Calculating Pi with 1000000000 iterations and 3 processes
+  Elapsed Time: 20.956588 seconds
+  Pi Value: 3.141594
 
-real    0m22.549s
-user    0m0.296s
-sys     0m0.068s
+  real    0m22.549s
+  user    0m0.296s
+  sys     0m0.068s
 
-$ time ./pi_grid.pl -co MachineConfig.pm -N 1000000000 -np 6
-Calculating Pi with 1000000000 iterations and 6 processes
-Elapsed Time: 15.694753 seconds
-Pi Value: 3.141594
+  $ time ./pi_grid.pl -co MachineConfig.pm -N 1000000000 -np 6
+  Calculating Pi with 1000000000 iterations and 6 processes
+  Elapsed Time: 15.694753 seconds
+  Pi Value: 3.141594
 
-real    0m17.285s
-user    0m0.304s
-sys     0m0.104s
+  real    0m17.285s
+  user    0m0.304s
+  sys     0m0.104s
 
-$ time ./pi_grid.pl -co MachineConfig.pm -N 1000000000 -np 12
-Calculating Pi with 1000000000 iterations and 12 processes
-Elapsed Time: 13.246352 seconds
-Pi Value: 3.141588
+  $ time ./pi_grid.pl -co MachineConfig.pm -N 1000000000 -np 12
+  Calculating Pi with 1000000000 iterations and 12 processes
+  Elapsed Time: 13.246352 seconds
+  Pi Value: 3.141588
 
-real    0m14.798s
-user    0m0.328s
-sys     0m0.116s
+  real    0m14.798s
+  user    0m0.328s
+  sys     0m0.116s
 
-$ time ./pi_grid.pl -co MachineConfig.pm -N 1000000000 -np 15
-Calculating Pi with 1000000000 iterations and 15 processes
-Elapsed Time: 12.924256 seconds
-Pi Value: 3.1416
+  $ time ./pi_grid.pl -co MachineConfig.pm -N 1000000000 -np 15
+  Calculating Pi with 1000000000 iterations and 15 processes
+  Elapsed Time: 12.924256 seconds
+  Pi Value: 3.1416
 
-real    0m14.500s
-user    0m0.372s
-sys     0m0.108s
+  real    0m14.500s
+  user    0m0.372s
+  sys     0m0.108s
 
 =head1 SUMMARY
 
@@ -207,6 +207,27 @@ Here follows an example:
 This way you don't have to specify your I<login> name on the remote machine even if it
 differs from your  I<login> name in the local machine, you don't have to specify the
 I<port> if it isn't 22, etc. This is the I<recommended> way to work with C<GRID::Cluster>.
+
+At the same file, to use multiplexed SSH connections, you can add the following lines:
+
+ # Will create socket as e.g.: ~/.ssh/controlmaster.socket.root.remotehost.example.com.22
+ ControlPath ~/.ssh/controlmaster.socket.%r.%h.%p
+
+With this line it is possible to prime all SSH connections with a socket in ~/.ssh/config.
+If the socket is available, the actual connection attempt is bypassed and the SSH client
+hitches a ride on a multiplexed connection. In order for the socket to be unique per
+multiplexed connection, it should be assigned a unique name through the tokens
+%r (remote user), %h (remote host) and %p (destination port).
+
+If there is no socket available, SSH connects directly to the remote host. In this case,
+it is possible to automatically pull up a socket for subsequent connections using the
+following option in ~/.ssh/config:
+
+ ControlMaster auto
+
+Thanks to SSH multiplexing you can improve the time invested in making new SSH
+connections, since the new connection is performed through an already established
+connection.
 
 =item * Once the public key is installed on the server you should be able to
 authenticate using your private key
@@ -437,23 +458,23 @@ value of the number Pi.
 The execution of the C<C> program on each of the three involved machines is presented
 in following lines. The number of intervals N has been fixed to 1,000,000,000.
 
-$ time ./pi 0 1000000000 1
-3.141593
-real    0m56.959s
-user    0m56.492s
-sys     0m0.004s
+  $ time ./pi 0 1000000000 1
+  3.141593
+  real    0m56.959s
+  user    0m56.492s
+  sys     0m0.004s
 
-$ time ./pi 0 1000000000 1
-3.141593
-real    0m30.862s
-user    0m30.850s
-sys     0m0.012s
+  $ time ./pi 0 1000000000 1
+  3.141593
+  real    0m30.862s
+  user    0m30.850s
+  sys     0m0.012s
 
-$ time ./pi 0 1000000000 1
-3.141593
-real    0m29.026s
-user    0m28.654s
-sys     0m0.049s
+  $ time ./pi 0 1000000000 1
+  3.141593
+  real    0m29.026s
+  user    0m28.654s
+  sys     0m0.049s
 
 These results indicate that the first machine is slower than the other two.
 
@@ -461,26 +482,26 @@ Now let us run the driver using only the fastest machine and one process. The ti
 spent is comparable to the pure C<C> time, and that is great because the overhead
 introduced by the coordination tasks is not as large:
 
-$ time ./pi_grid.pl -co MachineConfig.pm -N 1000000000 -np 1
-Calculating Pi with 1000000000 iterations and 1 processes
-Elapsed Time: 30.919523 seconds
-Pi Value: 3.141593
+  $ time ./pi_grid.pl -co MachineConfig.pm -N 1000000000 -np 1
+  Calculating Pi with 1000000000 iterations and 1 processes
+  Elapsed Time: 30.919523 seconds
+  Pi Value: 3.141593
 
-real    0m32.690s
-user    0m0.516s
-sys     0m0.060s
+  real    0m32.690s
+  user    0m0.516s
+  sys     0m0.060s
 
 Now we are going to execute the driver using two different machines, each one with only
 one process:
 
-$ time ./pi_grid.pl -co MachineConfig.pm -N 1000000000 -np 2
-Calculating Pi with 1000000000 iterations and 2 processes
-Elapsed Time: 28.459958 seconds
-Pi Value: 3.141592
+  $ time ./pi_grid.pl -co MachineConfig.pm -N 1000000000 -np 2
+  Calculating Pi with 1000000000 iterations and 2 processes
+  Elapsed Time: 28.459958 seconds
+  Pi Value: 3.141592
 
-real    0m30.610s
-user    0m0.524s
-sys     0m0.056s
+  real    0m30.610s
+  user    0m0.524s
+  sys     0m0.056s
 
 We can see that the sequential pure C version took 56 seconds in the slowest machine.
 By using two machines, each one with one process,  the time has been reduced to 23 seconds.
@@ -488,14 +509,14 @@ This a factor of 56/31 = 1.80 times faster. This factor is even better if I don'
 the set-up time: 56/29 = 1.93. The total time decreases if three machines are used, every
 one with only one process:
 
-$ time ./pi_grid.pl -co MachineConfig.pm -N 1000000000 -np 3
-Calculating Pi with 1000000000 iterations and 3 processes
-Elapsed Time: 20.956588 seconds
-Pi Value: 3.141594
+  $ time ./pi_grid.pl -co MachineConfig.pm -N 1000000000 -np 3
+  Calculating Pi with 1000000000 iterations and 3 processes
+  Elapsed Time: 20.956588 seconds
+  Pi Value: 3.141594
 
-real    0m22.549s
-user    0m0.296s
-sys     0m0.068s
+  real    0m22.549s
+  user    0m0.296s
+  sys     0m0.068s
 
 which gives a speed factor of 56/23 = 2.43 or not considering the set-up time 56/21 = 2.66.
 
@@ -504,32 +525,32 @@ better results, due to the load balancing produced by the use of a mechanism bas
 on a farm. The results increasing the number of processes (but only using three machines,
 every one with a process in every moment) are in the following lines:
 
-$ time ./pi_grid.pl -co MachineConfig.pm -N 1000000000 -np 6
-Calculating Pi with 1000000000 iterations and 6 processes
-Elapsed Time: 15.694753 seconds
-Pi Value: 3.141594
+  $ time ./pi_grid.pl -co MachineConfig.pm -N 1000000000 -np 6
+  Calculating Pi with 1000000000 iterations and 6 processes
+  Elapsed Time: 15.694753 seconds
+  Pi Value: 3.141594
 
-real    0m17.285s
-user    0m0.304s
-sys     0m0.104s
+  real    0m17.285s
+  user    0m0.304s
+  sys     0m0.104s
 
-$ time ./pi_grid.pl -co MachineConfig.pm -N 1000000000 -np 12
-Calculating Pi with 1000000000 iterations and 12 processes
-Elapsed Time: 13.246352 seconds
-Pi Value: 3.141588
+  $ time ./pi_grid.pl -co MachineConfig.pm -N 1000000000 -np 12
+  Calculating Pi with 1000000000 iterations and 12 processes
+  Elapsed Time: 13.246352 seconds
+  Pi Value: 3.141588
 
-real    0m14.798s
-user    0m0.328s
-sys     0m0.116s
+  real    0m14.798s
+  user    0m0.328s
+  sys     0m0.116s
 
-$ time ./pi_grid.pl -co MachineConfig.pm -N 1000000000 -np 15
-Calculating Pi with 1000000000 iterations and 15 processes
-Elapsed Time: 12.924256 seconds
-Pi Value: 3.1416
+  $ time ./pi_grid.pl -co MachineConfig.pm -N 1000000000 -np 15
+  Calculating Pi with 1000000000 iterations and 15 processes
+  Elapsed Time: 12.924256 seconds
+  Pi Value: 3.1416
 
-real    0m14.500s
-user    0m0.372s
-sys     0m0.108s
+  real    0m14.500s
+  user    0m0.372s
+  sys     0m0.108s
 
 Using 3 processes with 3 machines (every one with only one process), the
 fastest machines have to wait for the slowest one to finish the execution.

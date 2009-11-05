@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:               GRID-Cluster
-version:            0.02
+version:            0.03
 abstract:           Virtual clusters using SSH links
 author:
     - Eduardo Segredo <edusegre@gmail.com>

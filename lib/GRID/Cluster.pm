@@ -13,7 +13,7 @@ use List::Util qw(sum);
 # remote processes
 use constant BUFFERSIZE => 2048;
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 # Constructor
 
@@ -35,12 +35,15 @@ sub new {
 
   my @proposed_names = keys %{$self->{max_num_np}};
   $self->{host_names} = [];
+
+  my $logic_id = 0;
   
   for (@proposed_names) {
     eval{
       $self->{hosts}{$_} = GRID::Machine->new (
                              host        => $_,
                              debug       => $self->{debug}{$_},
+                             logic_id    => $logic_id,
                            );
     };
 
@@ -52,6 +55,7 @@ sub new {
     }
     else {
       push @{$self->{host_names}}, $_;
+      $logic_id++;
     }
   }
 
@@ -106,6 +110,40 @@ sub chdir {
 
   for (@{$self->{host_names}}) {
     my $machine_result = $self->{hosts}{$_}->chdir($dir);
+    $r->add(host_name => $_, machine_result => $machine_result);
+  }
+
+  return $r;
+}
+
+sub modput {
+  my $self = shift;
+  my @modules = @_;
+
+  my $r = GRID::Cluster::Result->new();
+
+  for (@{$self->{host_names}}) {
+    my $machine_result = $self->{hosts}{$_}->modput(@modules);
+    $r->add(host_name => $_, machine_result => $machine_result);
+  }
+
+  return $r;
+}
+
+sub eval {
+  my $self = shift;
+  my ($code, @args) = @_;
+
+  my $r = GRID::Cluster::Result->new();
+
+  # First round: Send eval operations to each machine
+  for (@{$self->{host_names}}) {
+    $self->{hosts}{$_}->send_operation("GRID::Machine::EVAL", $code, \@args);
+  }
+
+  # Second round: Receive different results from each machine 
+  for (@{$self->{host_names}}) {
+    my $machine_result = $self->{hosts}{$_}->_get_result();
     $r->add(host_name => $_, machine_result => $machine_result);
   }
 
@@ -475,6 +513,176 @@ call. See the following example:
   4  return (debug => \%debug, max_num_np => \%max_num_np);
 
 =back
+
+=head2 The Method C<modput>
+
+The syntax of the method C<modput> is:
+
+  my $result = $cluster->modput(@modules);
+
+It receives a list of strings describing modules (like 'Math::Prime::XS'), and it
+returns a L<GRID::Cluster::Result> object.
+
+An example is in following lines:
+
+  $ cat -n modput.pl
+  1  #!/usr/bin/perl
+  2  use warnings;
+  3  use strict;
+  4
+  5  use GRID::Cluster;
+  6  use Data::Dumper;
+  7
+  8  my $cluster = GRID::Cluster->new( debug =>      { orion => 0, beowulf => 0 },
+  9                                    max_num_np => { orion => 1, beowulf => 1 } );
+ 10
+ 11
+ 12  my $result = $cluster->modput('Math::Prime::XS');
+ 13
+ 14  $result = $cluster->eval(q{
+ 15                use Math::Prime::XS qw(primes);
+ 16
+ 17                primes(9);
+ 18              }
+ 19            );
+ 20
+ 21  print Dumper($result);
+
+When this program is executed, the following output is produced:
+
+  $ ./modput.pl
+  $VAR1 = bless( {
+                   'beowulf' => bless( {
+                                         'stderr' => '',
+                                         'errmsg' => '',
+                                         'type' => 'RETURNED',
+                                         'stdout' => '',
+                                         'errcode' => 0,
+                                         'results' => [
+                                                        2,
+                                                        3,
+                                                        5,
+                                                        7
+                                                      ]
+                                       }, 'GRID::Machine::Result' ),
+                   'orion' => bless( {
+                                       'stderr' => '',
+                                       'errmsg' => '',
+                                       'type' => 'RETURNED',
+                                       'stdout' => '',
+                                       'errcode' => 0,
+                                       'results' => [
+                                                      2,
+                                                      3,
+                                                      5,
+                                                      7
+                                                    ]
+                                     }, 'GRID::Machine::Result' )
+                 }, 'GRID::Cluster::Result' );
+
+=head2 The Method C<eval>
+
+The syntax of the method C<eval> is:
+
+  $result = $cluster->eval($code, @args)
+
+This method evaluates $code in the cluster, passing arguments and returning a
+L<GRID::Cluster::Result> object.
+
+An example of use:
+
+   $ cat -n eval_pi.pl
+   1  #!/usr/bin/perl
+   2  use warnings;
+   3  use strict;
+   4
+   5  use GRID::Cluster;
+   6  use Data::Dumper;
+   7
+   8  my $cluster = GRID::Cluster->new( debug =>      { orion => 0, beowulf => 0, localhost => 0, bw => 0 },
+   9                                    max_num_np => { orion => 1, beowulf => 1, localhost => 1, bw => 1} );
+  10
+  11  my @machines = ('orion', 'bw', 'beowulf', 'localhost');
+  12  my $np = @machines;
+  13  my $N = 1000000;
+  14
+  15  my $r = $cluster->eval(q{
+  16
+  17               my ($N, $np) = @_;
+  18
+  19               my $sum = 0;
+  20
+  21               for (my $i = SERVER->logic_id; $i < $N; $i += $np) {
+  22                   my $x = ($i + 0.5) / $N;
+  23                   $sum += 4 / (1 + $x * $x);
+  24               }
+  25
+  26               $sum /= $N;
+  27
+  28           }, $N, $np );
+  29
+  30  print Dumper($r);
+  31
+  32  my $result = 0;
+  33
+  34  foreach (@machines) {
+  35    $result += $r->{$_}{results}[0];
+  36  }
+  37
+  38  print "\nEl resultado del cálculo de PI es: $result\n";
+
+The cluster initialization (lines 8 -- 9) assigns a logical identifier to each machine.
+In lines 15 -- 28, the C<eval> method evaluates the block of code located at the C<q>
+operator for each machine of the cluster. In lines 32 - 36, an addition of every
+obtained values is performed. So on, the example produces the following output:
+
+  $VAR1 = bless( {
+                   'bw' => bless( {
+                                    'stderr' => '',
+                                    'errmsg' => '',
+                                    'type' => 'RETURNED',
+                                    'stdout' => '',
+                                    'errcode' => 0,
+                                    'results' => [
+                                                   '0.785398913397203'
+                                                 ]
+                                  }, 'GRID::Machine::Result' ),
+                   'beowulf' => bless( {
+                                         'stderr' => '',
+                                         'errmsg' => '',
+                                         'type' => 'RETURNED',
+                                         'stdout' => '',
+                                         'errcode' => 0,
+                                         'results' => [
+                                                        '0.785398413397751'
+                                                      ]
+                                       }, 'GRID::Machine::Result' ),
+                   'orion' => bless( {
+                                       'stderr' => '',
+                                       'errmsg' => '',
+                                       'type' => 'RETURNED',
+                                       'stdout' => '',
+                                       'errcode' => 0,
+                                       'results' => [
+                                                      '0.785397913397739'
+                                                    ]
+                                     }, 'GRID::Machine::Result' ),
+                   'localhost' => bless( {
+                                           'stderr' => '',
+                                           'errmsg' => '',
+                                           'type' => 'RETURNED',
+                                           'stdout' => '',
+                                           'errcode' => 0,
+                                           'results' => [
+                                                          '0.785397413397209'
+                                                        ]
+                                         }, 'GRID::Machine::Result' )
+                 }, 'GRID::Cluster::Result' );
+
+  El resultado del cálculo de PI es: 3.1415926535899
+
+The L<GRID::Cluster::Result> object contains the obtained results, and the addition of every
+results is the final calculation of number PI.
 
 =head2 The Method C<qx>
 
