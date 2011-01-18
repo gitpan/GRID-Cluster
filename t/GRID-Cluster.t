@@ -22,27 +22,27 @@ else {
   chdir "t";
 }
 SKIP: {
-  skip("Developer test", 12) unless ($ENV{DEVELOPER} && $ENV{GRID_REMOTE_MACHINES} && -x "$executable" && ($^O =~ /nux$/));
+  skip("Developer test", 12) unless ($ENV{DEVELOPER} && $ENV{GRID_REMOTE_MACHINES} && -x "$executable" && ($^O =~ /nux$|darwin/));
 
-     my $output = `$executable -N 1000 2>&1`;
+     my $output = `perl $executable -N 1000 2>&1`;
      like($output, qr{Pi Value: 3.14159.*}, "Example to calculate PI with 1000 iterations");
      
-     $output = `$executable -N 1000000 2>&1`;
+     $output = `perl $executable -N 1000000 2>&1`;
      like($output, qr{Pi Value: 3.14159.*}, "Example to calculate PI with 1000000 iterations");
      
-     $output = `$executable -N 1000000000 2>&1`;
+     $output = `perl $executable -N 1000000000 2>&1`;
      like($output, qr{Pi Value: 3.14159.*}, "Example to calculate PI with 1000000000 iterations");
      
      my $old_machines = $ENV{GRID_REMOTE_MACHINES};
      $ENV{GRID_REMOTE_MACHINES} = "";
      
-     $output = `$executable 2>&1`;
+     $output = `perl $executable 2>&1`;
      like($output,
           qr{No machines has been initialized in the cluster at $executable line 26.},
           "Error: No machines have been initialized in the cluster");
 
      $ENV{GRID_REMOTE_MACHINES} = "not_exists";
-     $output = `$executable 2>&1`;
+     $output = `perl $executable 2>&1`;
      like($output,
           qr{ssh:.*: Name or service not known.*
 Warning: Host.*has not been initialized: Can't execute perl in.*using ssh connection with automatic authentication
@@ -50,7 +50,7 @@ No machines has been initialized in the cluster at $executable line 26.},
           "Error: No cluster has been initialized due to a machine does not exists. PI can not be calculated");
 
      $ENV{GRID_REMOTE_MACHINES} = $old_machines.":not_exists";
-     $output = `$executable 2>&1`;
+     $output = `perl $executable 2>&1`;
      like($output,
           qr{ssh:(.|\n)*: Name or service not known.*
 Warning: Host.*has not been initialized: Can't execute perl in.*using ssh connection with automatic authentication

@@ -13,7 +13,7 @@ use List::Util qw(sum);
 # remote processes
 use constant BUFFERSIZE => 2048;
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 # Constructor
 
@@ -35,6 +35,8 @@ sub new {
 
   my @proposed_names = keys %{$self->{max_num_np}};
   $self->{host_names} = [];
+
+  
 
   my $logic_id = 0;
   
@@ -431,11 +433,11 @@ GRID::Cluster - Virtual clusters using SSH links
 =head1 DESCRIPTION
 
 This module is based on the module L<GRID::Machine>. It provides a set
-of methods to create 'virtual' clusters by the use of SSH links for communications among different
-remote hosts.
+of methods to create 'virtual' clusters by the use of SSH links for
+communications among different remote hosts.
 
-Since main features of C<GRID::Machine> are zero administration and minimal installation,
-L<GRID::Cluster> directly inherites these features.
+Since main features of C<GRID::Machine> are zero administration and minimal
+installation, L<GRID::Cluster> directly inherites these features.
 
 Mainly, C<GRID::Cluster> provides:
 
@@ -458,7 +460,9 @@ This module requires these other modules and libraries:
 
 =over
 
-=item * C<GRID::Machine> module by Casiano Rodriguez Leon
+=item * L<GRID::Machine> module by Casiano Rodriguez Leon
+
+=item * L<Term::Prompt> module by Allen Smith
 
 =back
 
@@ -787,7 +791,7 @@ To install C<GRID::Cluster>, follow these steps:
 
 =over 2
 
-=item  * 
+=item  *
 
 Set automatic ssh-authentication with machines where you have an account.
 
@@ -799,125 +803,112 @@ you have to:
 
 =over 2
 
-=item * 
+=item *
 
-Generate a public key use the C<ssh-keygen> utility. For example:
+Configure each remote machine in a configuration file (I<man ssh_config>).
+By default, the configuration file is $HOME/.ssh/config.
+The basic syntax which this script needs is the following:
 
-  local.machine$ ssh-keygen -t rsa -N ''
+	Host host_1
+	HostName myHost1.mydomain.com
+	User myUser
 
-The option C<-t> selects the type of key you want to generate.
-There are three types of keys: I<rsa1>, I<rsa> and I<dsa>.
-The C<-N> option is followed by the I<passphrase>. The C<-N ''> setting
-indicates that no pasphrase will be used. This is useful when used
-with key restrictions or when dealing with cron jobs, batch
-commands and automatic processing which is the context in which this
-module was designed.
-If still you don't like to have a private key without passphrase,
-provide a passphrase and use C<ssh-agent>
-to avoid the inconvenience of typing the passphrase each time.
-C<ssh-agent> is a program you run once per login sesion and load your keys into.
-From that moment on, any C<ssh> client will contact C<ssh-agent>
-and no more passphrase typing will be needed.
+	Host host_2
+	HostName myHost2.mydomain.com
+	User anotherUser
+	.
+	.
+	.
+	Host host_n
+	HostName myHostn.mydomain.com
+	User myUser
 
-By default, your identification will be saved in a file C</home/user/.ssh/id_rsa>.
-Your public key will be saved in C</home/user/.ssh/id_rsa.pub>.
+=item *
 
-=item * 
+Run the script I<pki.pl> which is included in this distribution. This script allows
+the generation of public/private key pairs, using the ssh-keygen command.
+Generated public key is copied to a list of remote machines. Specifically,
+the public key is added, if not exist, in the file $HOME/.ssh/authorized_keys of
+each specified remote machine.
 
-Once you have generated a key pair, you must install the public key on the
-remote machine. To do it, append the public component of the key in
+The basic execution of the script is as follows:
 
-  /home/user/.ssh/id_rsa.pub
+  local.machine$ ./pki.pl [-v] -c host_1,host_2,...host_n
 
-to file
+In this case, a public/private key pair is generated in the local directory $HOME/.ssh/,
+using the I<ssh-keygen> command, which must be located in some directory included in $PATH.
+By default, the filenames of the generated public and private keys are
+I<grid_cluster_rsa.pub> and I<grid_cluster_rsa>, respectively.
 
-  /home/user/.ssh/authorized_keys
+By default, generated keys have the following characteristics:
 
-on the remote machine.
-If the C<ssh-copy-id> script is available, you can do it using:
+=over 2
 
-  local.machine$ ssh-copy-id -i ~/.ssh/id_rsa.pub user@remote.machine
+=item * Type: RSA
 
-Alternatively you can write the following command:
+=item * Number of bits: 2048
 
-  $ ssh remote.machine "umask 077; cat >> .ssh/authorized_keys" < /home/user/.ssh/id_rsa.pub
+=item * No passphrase
 
-The C<umask> command is needed since the SSH server will refuse to
-read a C</home/user/.ssh/authorized_keys> files which have loose permissions.
+=back
 
-=item * 
+Once the public/private key pair has been generated, the public key is copied to
+remote machines specified by the option -c. This option can be used several times to
+specify sets of machines with the same password to login. By this way, the copy
+process of the public key to remote machines is easier.
 
-Edit your local configuration file C</home/user/.ssh/config> (see C<man ssh_config>
-in UNIX) and create a new section for C<GRID::Cluster> connections to that host.
-Here follows an example:
+The behaviour of the script can be modified by the different supported options. For
+more information, you can execute the script with the option -h.
 
-...
+=item *
 
-  # A new section inside the config file:
-  # it will be used when writing a command like:
-  #                  $ ssh gridyum
- 
-  Host gridyum
- 
-  # My username in the remote machine
-  user my_login_in_the_remote_machine
- 
-  # The actual name of the machine: by default the one provided in the
-  # command line
-  Hostname real.machine.name
+Add a line for each remote machine in the configuration file that specifies
+the public/private key which is going to be used to authenticate the user.
 
-  # The port to use: by default 22
-  Port 2048
+  Host host_1
+  HostName myHost1.mydomain.com
+  User myUser
+  IdentityFile ~/.ssh/grid_cluster_rsa
 
-  # The identitiy pair to use. By default ~/.ssh/id_rsa and ~/.ssh/id_dsa
-  IdentityFile /home/user/.ssh/yumid
+  Host host_2
+  HostName myHost2.mydomain.com
+  User anotherUser
+  IdentityFile ~/.ssh/grid_cluster_rsa
+  .
+  .
+  .
+  Host host_n
+  HostName myHostn.mydomain.com
+  User myUser
+  IdentityFile ~/.ssh/grid_cluster_rsa
 
-  # Useful to detect a broken network
-  BatchMode yes
+=item *
 
-  # Useful when the home directory is shared across machines,
-  # to avoid warnings about changed host keys when connecting
-  # to local host
-  NoHostAuthenticationForLocalhost yes
+Once the generated public key is installed on remote machines, you should be able to
+authenticate using your private key:
 
-
-  # Another section ...
-  Host another.remote.machine an.alias.for.this.machine
-  user mylogin_there
-
-  ...
-
-  This way you don't have to specify your I<login> name on the remote machine even if it
-  differs from your  I<login> name in the local machine, you don't have to specify the
-  I<port> if it isn't 22, etc. This is the I<recommended> way to work with C<GRID::Cluster>.
-  Avoid cluttering the constructor C<new>.
-
-=item * 
-
-Once the public key is installed on the remote machine you should be able to
-authenticate using your private key
-
-  $ ssh remote.machine
-  Linux remote.machine 2.6.15-1-686-smp #2 SMP Mon Mar 6 15:34:50 UTC 2006 i686
+  $ ssh host_1
+  Linux host_1 2.6.15-1-686-smp #2 SMP Mon Mar 6 15:34:50 UTC 2006 i686
   Last login: Sat Jul  7 13:34:00 2007 from local.machine
-  user@remote.machine:~$
+  user@host_1:~$
 
 You can also automatically execute commands in the remote server:
 
-  local.machine$ ssh remote.machine uname -a
-  Linux remote.machine 2.6.15-1-686-smp #2 SMP Mon Mar 6 15:34:50 UTC 2006 i686 GNU/Linux
+  local.machine$ ssh host_1 uname -a
+  Linux host_1 2.6.15-1-686-smp #2 SMP Mon Mar 6 15:34:50 UTC 2006 i686 GNU/Linux
 
 =back
 
 =item  *
 
 Before running the tests. Set on the local machine the environment variable
-C<GRID_REMOTE_MACHINES> to point to a set of machines that is available using automatic authentication.
-For example, on a C<bash>:
+C<GRID_REMOTE_MACHINES> to point to a set of machines that is available using
+automatic authentication. For example, on a C<bash>:
 
-        export GRID_REMOTE_MACHINES=user@machine_1.domain:user@machine_2.domain:...:user@machine_n.domain
+        export GRID_REMOTE_MACHINES=host_1:host_2:...:host_n
 
-Otherwise most connectivity tests will be skipped. This and the previous steps are optional.
+Otherwise most connectivity tests will be skipped. This and the previous steps are
+optional.
 
 =item *
 
@@ -934,7 +925,7 @@ Follow the traditional steps:
 
 =over 2
 
-=item * L<GRID::Cluster>
+=item * L<GRID::Cluster::Tutorial>
 
 =item * L<GRID::Machine>
 
@@ -963,16 +954,15 @@ Nacional de I+D+i' with the contract number TIN2008-06491-C04-02.
 Also, it has been supported by the Canary Government project number
 PI2007/015.
 
-The work of Eduardo Segredo has been developed under the contract
-PTA2003-02-01053.
+The work of Eduardo Segredo was funded by grant FPU-AP2009-0457.
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2009 by Casiano Rodriguez Leon and Eduardo Segredo Gonzalez.
+Copyright (C) 2010 by Casiano Rodriguez Leon and Eduardo Segredo Gonzalez.
 All rights reserved.
 
 This library is free software; you can redistribute it and/or modify
-it under the same terms as Perl itself, either Perl version 5.8.8 or,
+it under the same terms as Perl itself, either Perl version 5.12.2 or,
 at your option, any later version of Perl 5 you may have available.
 
 This program is distributed in the hope that it will be useful, but

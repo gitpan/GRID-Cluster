@@ -22,7 +22,6 @@ examples/matrixproduct/qx/matrix_grid.pl
 examples/matrixproduct/qx/OnlyEuropa.pm
 examples/matrixproduct/qx/Makefile
 examples/matrixproduct/README
-examples/pi/qx/.pi_grid.pl.swp
 examples/pi/qx/MachineConfig.pm
 examples/pi/qx/OnlyEuropa.pm
 examples/pi/qx/pi.c
@@ -34,6 +33,7 @@ examples/uname_echo_qx.pl
 examples/uname_qx.pl
 examples/eval_pi.pl
 t/GRID-Cluster.t
+t/GRID-Cluster-pki.t
 t/matrix_open/data/A100x100.dat
 t/matrix_open/data/A10x10.dat
 t/matrix_open/data/A2x2.dat
@@ -52,10 +52,10 @@ t/matrix_open2/data/B2x2.dat
 t/matrix_open2/matrix.c
 t/matrix_open2/matrix_grid.pl
 t/matrix_open2/Makefile
-t/pi_open/pi_grid_scalar.pl
 t/pi_qx/pi.c
 t/pi_qx/pi_grid.pl
 t/pi_qx/Makefile
 t/pi_eval/eval_pi.pl
-t/modput/modput.pl
+t/pki/config
+scripts/pki.pl
 META.yml                                 Module meta-data (added by MakeMaker)

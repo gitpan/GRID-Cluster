@@ -184,16 +184,15 @@ Nacional de I+D+i' with the contract number TIN2008-06491-C04-02.
 Also, it has been supported by the Canary Government project number
 PI2007/015.
 
-The work of Eduardo Segredo has been developed under the contract
-PTA2003-02-01053.
+The work of Eduardo Segredo was funded by grant FPU-AP2009-0457.
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2009 by Casiano Rodriguez Leon and Eduardo Segredo Gonzalez.
+Copyright (C) 2010 by Casiano Rodriguez Leon and Eduardo Segredo Gonzalez.
 All rights reserved.
 
 This library is free software; you can redistribute it and/or modify
-it under the same terms as Perl itself, either Perl version 5.8.8 or,
+it under the same terms as Perl itself, either Perl version 5.12.2 or,
 at your option, any later version of Perl 5 you may have available.
 
 This program is distributed in the hope that it will be useful, but

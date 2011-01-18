@@ -1,22 +1,15 @@
 --- #YAML:1.0
-name:               GRID-Cluster
-version:            0.03
-abstract:           Virtual clusters using SSH links
-author:
+name:                GRID-Cluster
+version:             0.04
+abstract:            Virtual clusters using SSH links
+license:             ~
+author:              
     - Eduardo Segredo <edusegre@gmail.com>
-license:            unknown
-distribution_type:  module
-configure_requires:
-    ExtUtils::MakeMaker:  0
-build_requires:
-    ExtUtils::MakeMaker:  0
-requires:
-    GRID::Machine:  0.105
-no_index:
-    directory:
-        - t
-        - inc
-generated_by:       ExtUtils::MakeMaker version 6.50
+generated_by:        ExtUtils::MakeMaker version 6.42
+distribution_type:   module
+requires:     
+    GRID::Machine:                 0.110
+    Term::Prompt:                  0
 meta-spec:
-    url:      http://module-build.sourceforge.net/META-spec-v1.4.html
-    version:  1.4
+    url:     http://module-build.sourceforge.net/META-spec-v1.3.html
+    version: 1.3
